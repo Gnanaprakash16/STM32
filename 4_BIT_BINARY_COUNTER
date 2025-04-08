@@ -1,0 +1,95 @@
+//PC4-PC7 AS OUTPUT
+
+#define GPIOC_BASE       (0x50000800UL)
+#define RCC_BASE         (0x40021000UL)
+
+#define RCC_IOPENER_OFFSET (0x34UL)
+#define RCC_IOPENR       (*(volatile unsigned int*)(RCC_BASE + RCC_IOPENER_OFFSET))
+
+
+#define GPIOC_MODER_OFFSET (0x00UL)
+#define GPIOC_MODER      (*(volatile unsigned int*)(GPIOC_BASE + GPIOC_MODER_OFFSET))
+
+#define GPIOC_IDR_OFFSET   (0x10UL)
+#define GPIOC_IDR        (*(volatile unsigned int*)(GPIOC_BASE + GPIOC_IDR_OFFSET))
+
+
+#define GPIOC_ODR_OFFSET  (0x14UL)
+#define GPIOC_ODR        (*(volatile unsigned int*)(GPIOC_BASE + GPIOC_ODR_OFFSET))
+
+void delay(volatile unsigned int time)
+{
+    while(time--) {
+        for (volatile int i = 0; i < 1000; i++);
+    }
+}
+
+int main(){
+	RCC_IOPENR |= (1 << 2);
+
+	GPIOC_MODER &= ~(0xFF<<8);
+	GPIOC_MODER |=   (85<<8);
+
+
+	while(1)
+	{
+  
+  //method 1 : By configuring each value separately
+		GPIOC_ODR &= (1<<9);
+		GPIOC_ODR |= (0X00<<4);
+		delay(1000);
+		GPIOC_ODR &= (1<<9);
+		GPIOC_ODR |= (0X01<<4);
+		delay(1000);
+		GPIOC_ODR &= (1<<9);
+		GPIOC_ODR |= (0X02<<4);
+		delay(1000);
+		GPIOC_ODR &= (1<<9);
+		GPIOC_ODR |= (0X03<<4);
+		delay(1000);
+		GPIOC_ODR &= (1<<9);
+		GPIOC_ODR |= (0X04<<4);
+		delay(1000);
+		GPIOC_ODR &= (1<<9);
+		GPIOC_ODR |= (0X05<<4);
+		delay(1000);
+		GPIOC_ODR &= (1<<9);
+		GPIOC_ODR |= (0X06<<4);
+		delay(1000);
+		GPIOC_ODR &= (1<<9);
+		GPIOC_ODR |= (0X07<<4);
+		delay(1000);
+		GPIOC_ODR &= (1<<9);
+		GPIOC_ODR |= (0X08<<4);
+		delay(1000);
+		GPIOC_ODR &= (1<<9);
+		GPIOC_ODR |= (0X09<<4);
+		delay(1000);
+		GPIOC_ODR &= (1<<9);
+		GPIOC_ODR |= (0X0A<<4);
+		delay(1000);
+		GPIOC_ODR &= (1<<9);
+		GPIOC_ODR |= (0X0B<<4);
+		delay(1000);
+		GPIOC_ODR &= (1<<9);
+		GPIOC_ODR |= (0X0C<<4);
+		delay(1000);
+		GPIOC_ODR &= (1<<9);
+		GPIOC_ODR |= (0X0D<<4);
+		delay(1000);
+		GPIOC_ODR &= (1<<9);
+		GPIOC_ODR |= (0X0E<<4);
+		delay(1000);
+		GPIOC_ODR &= (1<<9);
+		GPIOC_ODR |= (0X0F<<4);
+		delay(1000);
+
+   //method 2 : By configuring using loop
+		for(int i=0;i<=15;i++){
+			GPIOC_ODR &= (1<<9);
+			GPIOC_ODR |= (i<<4);
+			delay(1000);
+		}
+
+	}
+}
