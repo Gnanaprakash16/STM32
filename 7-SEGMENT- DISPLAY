@@ -1,0 +1,68 @@
+//PA1-PA7 AS OUTPUT
+
+
+
+#define RCC_BASE         (0x40021000UL)
+
+#define RCC_IOPENER_OFFSET (0x34UL)
+#define RCC_IOPENR       (*(volatile unsigned int*)(RCC_BASE + RCC_IOPENER_OFFSET))
+
+#define GPIOA_BASE       (0x50000000UL)
+
+#define GPIOA_MODER_OFFSET (0x00UL)
+#define GPIOA_MODER      (*(volatile unsigned int*)(GPIOA_BASE + GPIOA_MODER_OFFSET))
+
+#define GPIOA_BSRR_OFFSET   (0x18UL)
+#define GPIOA_BSRR          (*(volatile unsigned int*)(GPIOA_BASE + GPIOA_BSRR_OFFSET))
+
+
+void delay(volatile unsigned int time)
+{
+    while(time--) {
+        for (volatile int i = 0; i < 1000; i++);
+    }
+}
+
+
+int main(){
+	RCC_IOPENR |= (1 << 0);
+
+	GPIOA_MODER &= ~(0x3FFF<<2);
+	GPIOA_MODER |=  (0x1555<<2);
+
+	while(1){
+		GPIOA_BSRR = (0x7F << (16 + 1));
+		GPIOA_BSRR = (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4) | (1 << 5) | (1 << 6) | (1 << 23);
+        delay(1000);
+        GPIOA_BSRR = (0x7F << (16 + 1));
+        GPIOA_BSRR = (1 << 17) | (1 << 2) | (1 << 3) | (1 << 20) | (1 << 21) | (1 << 22 ) | (1 << 23);
+        delay(1000);
+        GPIOA_BSRR = (0x7F << (16 + 1));
+        GPIOA_BSRR = (1 << 1) | (1 << 2) | (1 << 19) | (1 << 4) | (1 << 5) | (1 << 22) | (1 << 7);
+        delay(1000);
+        GPIOA_BSRR = (0x7F << (16 + 1));
+        GPIOA_BSRR = (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4) | (1 << 21) | (1 << 22) | (1 << 7);
+        delay(1000);
+        GPIOA_BSRR = (0x7F << (16 + 1));
+        GPIOA_BSRR = (1 << 17) | (1 << 2) | (1 << 3) | (1 << 20) | (1 << 21) | (1 << 6) | (1 << 7);
+        delay(1000);
+        GPIOA_BSRR = (0x7F << (16 + 1));
+        GPIOA_BSRR = (1 << 1) | (1 << 17) | (1 << 3) | (1 << 4) | (1 << 21) | (1 << 6) | (1 << 7);
+        delay(1000);
+        GPIOA_BSRR = (0x7F << (16 + 1));
+        GPIOA_BSRR = (1 << 1) | (1 << 17) | (1 << 3) | (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7);
+        delay(1000);
+        GPIOA_BSRR = (0x7F << (16 + 1));
+        GPIOA_BSRR = (1 << 1) | (1 << 2) | (1 << 3) | (1 << 20) | (1 << 21) | (1 << 22) | (1 << 23);
+        delay(1000);
+        GPIOA_BSRR = (0x7F << (16 + 1));
+        GPIOA_BSRR = (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7);
+        delay(1000);
+        GPIOA_BSRR = (0x7F << (16 + 1));
+        GPIOA_BSRR = (1 << 1) | (1 << 2) | (1 << 3) | (1 << 20) | (1 << 21) | (1 << 6) | (1 << 7);
+        delay(1000);
+
+	}
+}
+
+
