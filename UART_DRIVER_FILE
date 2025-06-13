@@ -1,0 +1,147 @@
+//main.c
+#include "stdint.h"
+#include "stdio.h"
+#include "string.h"
+#include "uart.h"
+
+
+int main()
+{
+	UART_init();
+    char name[50]="Hello from STM32G070RB Board";
+    char buffer[50];  // Store the string representation
+
+    while(1) {
+        sprintf(buffer, "%s\r\n", name);  // Convert number to string
+        for (int i = 0; buffer[i] != '\0'; i++) {
+            USART2_Write(buffer[i]);     // Send each character
+        }
+        for(volatile int i = 0; i < 1000000; i++);  // Longer delay
+
+    }
+}
+
+
+//uart.h
+#ifndef INC_UART_H_
+#define INC_UART_H_
+
+void UART_init(void);
+
+#endif /* INC_UART_H_ */
+
+
+//uart.c
+#include "stdint.h"
+#include "uart.h"
+
+
+#define RCC_BASE                  (0x40021000UL)
+#define RCC_APBENR1_OFFSET        (0x3CUL)
+#define RCC_APBENR1               (*(volatile unsigned int*)(RCC_BASE+RCC_APBENR1_OFFSET))
+
+
+#define RCC_IOPENER_OFFSET        (0x34UL)
+#define RCC_IOPENR                (*(volatile unsigned int*)(RCC_BASE + RCC_IOPENER_OFFSET))
+
+#define GPIOA_BASE                (0x50000000UL)
+#define GPIOA_MODER_OFFSET        (0x00UL)
+#define GPIOA_MODER               (*(volatile unsigned int*)(GPIOA_BASE + GPIOA_MODER_OFFSET))
+
+#define GPIOA_AFRL_OFFSET         (0x20UL)
+#define GPIOA_AFRL                (*(volatile unsigned int*)(GPIOA_BASE+GPIOA_AFRL_OFFSET))
+
+#define GPIOA_AFRH_OFFSET         (0x24UL)
+#define GPIOA_AFRH                (*(volatile unsigned int*)(GPIOA_BASE+GPIOA_AFRH_OFFSET))
+
+#define UART2_RCC_EN              (1U<<17)
+
+#define USART2_BASE               (0x40004400UL)
+#define USART2_BRR_OFFSET         (0x0CUL)
+#define USART2_BRR                (*(volatile unsigned int*)(USART2_BASE+USART2_BRR_OFFSET))
+
+#define USART2_CR1_OFFSET         (0x00UL)
+#define USART2_CR1                (*(volatile unsigned int*)(USART2_BASE+USART2_CR1_OFFSET))
+
+#define USART2_ISR_OFFSET         (0x1CUL)
+#define USART2_ISR                (*(volatile unsigned int*)(USART2_BASE+USART2_ISR_OFFSET))
+
+#define USART_TDR_OFFSET          (0x28UL)
+#define USART_TDR                 (*(volatile unsigned int*)(USART2_BASE+USART_TDR_OFFSET))
+
+#define SYS_FREQ                  16000000
+#define APB1_CLK                  SYS_FREQ
+
+#define UART_BAUDRATE             115200
+
+
+
+
+static void uart_set_baudrate(uint32_t PeriphClk,uint32_t BaudRate);
+static uint16_t compute_uart_bd(uint32_t PeriphClk, uint32_t BaudRate);
+void USART2_Write(int ch);
+void UART_init(void);
+
+
+
+
+void UART_init(void) {
+    // Enable GPIOA clock
+    RCC_IOPENR |= (1U << 0);
+
+    // Configure PA2 (USART2_TX) as Alternate Function
+    GPIOA_MODER &= ~(0x3 << 4);  // Clear bits 4-5 (PA2)
+    GPIOA_MODER |= (0x2 << 4);   // Set Alternate Function (10)
+
+    // Set AF1 (USART2_TX) for PA2 (AFRL, bits 8-11)
+    GPIOA_AFRL &= ~(0xF << 8);   // Clear AF bits for PA2
+    GPIOA_AFRL |= (0x1 << 8);    // Set AF1 (USART2_TX)
+
+    // Rest of UART init (same as before)
+    RCC_APBENR1 |= UART2_RCC_EN;
+    uart_set_baudrate(APB1_CLK, UART_BAUDRATE);
+
+    USART2_CR1 = (1U << 3);  // TE (Transmitter Enable)
+    USART2_CR1 |= (1U << 0); // UE (USART Enable)
+}
+
+void USART2_Write(int ch)
+{
+	/*Make Transmit data Register(TXE) Empty*/
+	while(!(USART2_ISR & (1U<<7)));
+
+	USART_TDR = (ch & 0xFF);
+
+}
+
+static void uart_set_baudrate(uint32_t PeriphClk,uint32_t BaudRate)
+{
+
+      USART2_BRR = compute_uart_bd(PeriphClk,BaudRate);
+}
+
+static uint16_t compute_uart_bd(uint32_t PeriphClk, uint32_t BaudRate)
+{
+	return ((PeriphClk+(BaudRate/2U))/BaudRate);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
