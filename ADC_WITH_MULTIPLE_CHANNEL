@@ -1,0 +1,120 @@
+//main.c
+#include "stdint.h"
+#include "stdio.h"
+#include "string.h"
+#include "uart.h"
+#include "adc.h"
+
+uint32_t sensor_value_pa0;
+uint32_t sensor_value_pa1;
+char buffer[100];
+
+int main()
+{
+    UART_TX_init();
+    adc_init_pa0_pa1();
+
+    while(1)
+    {
+        // Read PA0
+        start_conversion();
+        sensor_value_pa0 = read_adc_channel(0);
+        for (volatile int d = 0; d < 1000; d++);
+        start_conversion();
+        sensor_value_pa1 = read_adc_channel(1);
+
+        // Format and send both readings
+        sprintf(buffer, "PA0: %d, PA1: %d\r\n", (int)sensor_value_pa0,(int) sensor_value_pa1);
+        for (int i = 0; buffer[i] != '\0'; i++) {
+            USART2_Write(buffer[i]);
+        }
+
+        // Delay
+        for(volatile int i = 0; i < 100000; i++);
+    }
+}
+
+
+//adc.c
+#include "stdint.h"
+
+#define RCC_BASE_ADD              0x40021000UL
+#define RCC_APBENR2_OFFSET        0x40UL
+#define RCC_APBENR2               (*(volatile unsigned int*)(RCC_BASE_ADD+RCC_APBENR2_OFFSET))
+
+#define RCC_IOPENER_OFFSET        (0x34UL)
+#define RCC_IOPENR                (*(volatile unsigned int*)(RCC_BASE_ADD + RCC_IOPENER_OFFSET))
+
+#define GPIOA_BASE                (0x50000000UL)
+#define GPIOA_MODER_OFFSET        (0x00UL)
+#define GPIOA_MODER               (*(volatile unsigned int*)(GPIOA_BASE + GPIOA_MODER_OFFSET))
+
+#define ADC_BASE_ADD              (0x40012400UL)
+#define ADC_CFGR1_OFFSET          (0x0CUL)
+#define ADC_CFGR1                 (*(volatile unsigned int*)(ADC_BASE_ADD + ADC_CFGR1_OFFSET))
+
+#define ADC_CHSELR_OFFSET         (0x28UL)
+#define ADC_CHSELR                (*(volatile unsigned int*)(ADC_BASE_ADD+ADC_CHSELR_OFFSET))
+
+#define ADC_ISR_OFFSET            (0x00UL)
+#define ADC_ISR                   (*(volatile unsigned int*)(ADC_BASE_ADD + ADC_ISR_OFFSET))
+
+#define ADC_DR_OFFSET             (0x40UL)
+#define ADC_DR                    (*(volatile unsigned int*)(ADC_BASE_ADD + ADC_DR_OFFSET))
+
+#define ADC_CR_OFFSET             (0x08UL)
+#define ADC_CR                    (*(volatile unsigned int*)(ADC_BASE_ADD + ADC_CR_OFFSET))
+
+void adc_init_pa0_pa1(void)
+{
+    // 1. Enable GPIOA clock
+    RCC_IOPENR |= (1U << 0);
+
+    // 2. Configure PA0 and PA1 as analog mode
+    GPIOA_MODER &= ~((0x3 << (0 * 2)) | (0x3 << (1 * 2)));  // Clear mode bits for PA0 and PA1
+    GPIOA_MODER |=  ((0x3 << (0 * 2)) | (0x3 << (1 * 2)));  // Set to analog mode (11)
+
+    // 3. Enable ADC clock
+    RCC_APBENR2 |= (1U << 20);
+
+    // 4. Reset ADC config
+    ADC_CFGR1 = 0;
+
+    // 5. Select channels 0 and 1 (PA0 and PA1)
+//    ADC_CHSELR = (1U << 0) | (1U << 1);
+
+    // 6. Enable ADC
+    ADC_CR |= (1U << 0);
+
+    // Wait for ADC to be ready
+    while (!(ADC_ISR & (1U << 0)));
+}
+
+void start_conversion(void)
+{
+    ADC_CR |= (1U << 2);  // Start conversion
+}
+
+uint32_t read_adc_channel(uint8_t channel)
+{
+    ADC_CHSELR = (1 << channel);        // Select channel (0 for PA0, 1 for PA1)
+    ADC_CR |= (1 << 2);                 // Start conversion
+    while (!(ADC_ISR & (1 << 2)));      // Wait for EOC
+    ADC_ISR |= (1 << 2);                // Clear EOC
+    return ADC_DR;
+}
+
+//adc.h
+#ifndef INC_ADC_H_
+#define INC_ADC_H_
+
+#include "stdint.h"
+
+// Function declarations for basic 2-channel ADC (no sequence register)
+void adc_init_pa0_pa1(void);
+void start_conversation(void);
+uint32_t adc_read(void);
+
+
+#endif /* INC_ADC_H_ */
+
